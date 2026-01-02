@@ -49,5 +49,13 @@ Each module may introduce new systems, assets, or engine-level concepts as requi
 
 ---
 
+### Engine Template Architecture Note (UE 5.7)
+
+Unreal Engine 5.7 restructures the First Person template by separating gameplay mechanics into modular variants rather than embedding them directly in the base template. For example, shooter-specific functionality (projectiles, firing input, weapon logic) is implemented within the `Variant_Shooter` content rather than the default First Person setup.
+
+This modular approach allows multiple gameplay styles (e.g., horror, shooter) to coexist within a single project while sharing core engine systems such as input, movement, and camera control. This design reflects current trends in game engine architecture emphasizing modularity, reusability, and separation of concerns.
+
+---
+
 ## Status
 🚧 **In Progress** — Active development during the GAM415 term.
