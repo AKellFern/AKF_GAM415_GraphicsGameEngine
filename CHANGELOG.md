@@ -1,6 +1,6 @@
 # Changelog
 
-## Module 1 – Project Setup
+## Module 1 – Project Setup - Week of January 5th, 2026
 
 ### Added
 - Initialized Unreal Engine project using a source-built Unreal Engine 5.x setup.
