@@ -5,14 +5,16 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Components/BoxComponent.h"
+// Allows use of Dynamic Material Instances
+#include "Materials/MaterialInstanceDynamic.h"
 #include "CubeDMIMod.generated.h"
 
 UCLASS()
 class AKFGAM415_API ACubeDMIMod : public AActor
 {
 	GENERATED_BODY()
-	
-public:	
+
+public:
 	// Sets default values for this actor's properties
 	ACubeDMIMod();
 
@@ -20,7 +22,7 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-public:	
+public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
@@ -30,13 +32,21 @@ public:
 	UPROPERTY(EditAnywhere)
 	UStaticMeshComponent* cubeMesh;
 
+	// Base material used to create the dynamic material instance
 	UPROPERTY(EditAnywhere)
 	UMaterialInterface* baseMat;
 
+	// Dynamic Material Instance used to change parameters at runtime
 	UPROPERTY()
 	UMaterialInstanceDynamic* dmiMat;
 
 	UFUNCTION()
-	void OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
-
+	void OnOverlapBegin(
+		UPrimitiveComponent* OverlappedComp,
+		AActor* OtherActor,
+		UPrimitiveComponent* OtherComp,
+		int32 OtherBodyIndex,
+		bool bFromSweep,
+		const FHitResult& SweepResult
+	);
 };
