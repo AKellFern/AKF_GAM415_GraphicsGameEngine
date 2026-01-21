@@ -8,6 +8,9 @@
 #include "Kismet/GameplayStatics.h"
 // Used for random color and frame selection
 #include "Kismet/KismetMathLibrary.h"
+//Niagara systems
+#include "NiagaraFunctionLibrary.h"
+#include "NiagaraComponent.h"
 
 AAKFGAM415Projectile::AAKFGAM415Projectile()
 {
@@ -34,20 +37,18 @@ void AAKFGAM415Projectile::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (projMat)
-	{
-		// Create Dynamic Material Instance so projectile color can be changed at runtime
-		dmiMat = ballMesh->CreateDynamicMaterialInstance(0, projMat);
-	}
+	// Use Kismet Math Library to generate random color values and store in a variable to be reused later
+	randColor = FLinearColor(UKismetMathLibrary::RandomFloatInRange(0.0f, 1.0f),
+		UKismetMathLibrary::RandomFloatInRange(0.0f, 1.0f),
+		UKismetMathLibrary::RandomFloatInRange(0.0f, 1.0f),
+		1.0f);
 
-	// Generate and store a random color for this projectile instance
-	randColor = FLinearColor::MakeRandomColor();
+	// Create Dynamic Material Instance for projectile and set its color parameter
+	dmiMat = UMaterialInstanceDynamic::Create(projMat, this);
+	ballMesh->SetMaterial(0, dmiMat);
 
-	if (dmiMat)
-	{
-		// Apply randomized color to the projectile material
-		dmiMat->SetVectorParameterValue("ProjColor", randColor);
-	}
+	// Set the randomized color to the projectile material
+	dmiMat->SetVectorParameterValue("ProjColor", randColor);
 }
 
 void AAKFGAM415Projectile::OnHit(
@@ -58,34 +59,51 @@ void AAKFGAM415Projectile::OnHit(
 	const FHitResult& Hit
 )
 {
-	if (baseMat)
+	//Only add impulse and destory projectile if we hit a physics simulating object
+	if ((OtherActor != nullptr) && (OtherActor != this) && (OtherComp != nullptr) && OtherComp->IsSimulatingPhysics())
 	{
-		// Spawn decal at hit location
-		UDecalComponent* decalComp = UGameplayStatics::SpawnDecalAtLocation(
+		OtherComp->AddImpulseAtLocation(
+			GetVelocity() * 100.0f,
+			GetActorLocation()
+			);
+
+		Destroy();
+	}
+	
+
+	if (OtherActor != nullptr)
+	{
+		//Checks that the Material and Niagara system are valid before proceeding	
+		if (colorP)
+		{
+			UNiagaraComponent* particleComp = UNiagaraFunctionLibrary::SpawnSystemAttached(
+				colorP,
+				HitComp,
+				NAME_None,
+				FVector(0.0f),
+				FRotator(0.0f),
+				EAttachLocation::KeepRelativeOffset,
+				true
+				);
+			particleComp->SetNiagaraVariableLinearColor(FString("RandColor"), randColor);
+			ballMesh->DestroyComponent();
+			CollisionComp->BodyInstance.SetCollisionProfileName("NoCollision");
+		}
+
+		float frameNum = UKismetMathLibrary::RandomIntegerInRange(0.f, 3.f);
+
+		auto Decal = UGameplayStatics::SpawnDecalAtLocation(
 			GetWorld(),
 			baseMat,
-			FVector(10.0f),
-			Hit.ImpactPoint,
-			Hit.ImpactNormal.Rotation(),
-			5.0f
-		);
+			FVector(UKismetMathLibrary::RandomFloatInRange(20.f, 40.f)),
+			Hit.Location,
+			Hit.Normal.Rotation(),
+			0.f
+			);
+		auto MatInstance = Decal->CreateDynamicMaterialInstance();
 
-		if (decalComp)
-		{
-			// Create Dynamic Material Instance for decal
-			UMaterialInstanceDynamic* decalDMI = decalComp->CreateDynamicMaterialInstance();
-
-			if (decalDMI)
-			{
-				// Randomize splat frame for visual variation
-				float frame = UKismetMathLibrary::RandomFloatInRange(0.0f, 3.0f);
-				decalDMI->SetScalarParameterValue("Frame", frame);
-
-				// Match decal color to projectile color
-				decalDMI->SetVectorParameterValue("Color", randColor);
-			}
-		}
+		MatInstance->SetVectorParameterValue("Color", randColor);
+		MatInstance->SetScalarParameterValue("Frame", frameNum);
+		
 	}
-
-	Destroy();
 }

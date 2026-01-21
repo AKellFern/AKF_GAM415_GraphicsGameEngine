@@ -4,6 +4,9 @@
 #include "AKFGAM415Character.h"
 // Used for generating random values
 #include "Kismet/KismetMathLibrary.h"
+//Niagara systems	
+#include "NiagaraFunctionLibrary.h"
+#include "NiagaraComponent.h"
 
 // Sets default values
 ACubeDMIMod::ACubeDMIMod()
@@ -64,13 +67,29 @@ void ACubeDMIMod::OnOverlapBegin(
 		float ranNumZ = UKismetMathLibrary::RandomFloatInRange(0.0f, 1.0f);
 
 		// Store random color for the material parameter
-		FVector4 randColor = FVector4(ranNumX, ranNumY, ranNumZ, 1.f);
+		FLinearColor randColor = FLinearColor(ranNumX, ranNumY, ranNumZ, 1.f);
 
 		if (dmiMat)
 		{
 			// Apply color and scalar parameters to the material
 			dmiMat->SetVectorParameterValue("Color", randColor);
 			dmiMat->SetScalarParameterValue("Darkness", ranNumX);
+
+
+			if (dmiMat)
+			{
+				UNiagaraComponent* particleComp = UNiagaraFunctionLibrary::SpawnSystemAttached(
+					colorP,
+					OtherComp,
+					NAME_None,
+					FVector(0.f),
+					FRotator(0.f),
+					EAttachLocation::KeepRelativeOffset,
+					true
+				);
+
+				particleComp->SetNiagaraVariableLinearColor(FString("RandColor"), randColor);
+			}
 		}
 	}
 }

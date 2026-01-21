@@ -9,6 +9,8 @@
 #include "Materials/MaterialInstanceDynamic.h"
 #include "CubeDMIMod.generated.h"
 
+class UNiagaraSystem;
+
 UCLASS()
 class AKFGAM415_API ACubeDMIMod : public AActor
 {
@@ -39,6 +41,10 @@ public:
 	// Dynamic Material Instance used to change parameters at runtime
 	UPROPERTY()
 	UMaterialInstanceDynamic* dmiMat;
+
+	//Color variable for Niagara System
+	UPROPERTY(EditAnywhere)
+	UNiagaraSystem* colorP;
 
 	UFUNCTION()
 	void OnOverlapBegin(

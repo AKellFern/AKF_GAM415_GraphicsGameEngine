@@ -10,6 +10,7 @@
 
 class USphereComponent;
 class UProjectileMovementComponent;
+class UNiagaraSystem;
 
 UCLASS(config = Game)
 class AKFGAM415_API AAKFGAM415Projectile : public AActor
@@ -49,6 +50,11 @@ protected:
 	// Base decal material for impact splat
 	UPROPERTY(EditAnywhere)
 	UMaterial* baseMat;
+
+	//Color variable for Niagara System
+	UPROPERTY(EditAnywhere)
+	UNiagaraSystem* colorP;
+
 
 public:
 	// Called when projectile hits another object
