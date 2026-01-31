@@ -38,6 +38,14 @@ public:
 	UPROPERTY(EditAnywhere)
 	TArray<int> Triangles;
 
+	UPROPERTY(EditAnywhere)
+	TArray<FVector2D> UV0;
+
+	//Setting UV
+	UPROPERTY(EditAnywhere)
+	UMaterialInterface* PlaneMat; 
+
+
 	//Function to create the mesh
 	void CreateMesh();
 

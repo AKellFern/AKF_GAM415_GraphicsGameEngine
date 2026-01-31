@@ -14,6 +14,8 @@ AProcPlane::AProcPlane()
 	//Create the procedural mesh component
 	procMesh = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("Proc Mesh"));
 
+	
+
 }
 
 // Called when the game starts or when spawned
@@ -30,6 +32,11 @@ void AProcPlane::PostActorCreated()
 {
 	Super::PostActorCreated();
 	CreateMesh();
+	//Set a UV material	
+	if (PlaneMat)
+	{
+		procMesh->SetMaterial(0, PlaneMat);
+	}
 }
 
 void AProcPlane::PostLoad()
@@ -49,6 +56,6 @@ void AProcPlane::Tick(float DeltaTime)
 //Function to create the mesh
 void AProcPlane::CreateMesh()
 {
-	procMesh->CreateMeshSection(0, Vertices, Triangles, TArray<FVector>(), TArray<FVector2D>(), TArray<FColor>(), TArray<FProcMeshTangent>(), true);
+	procMesh->CreateMeshSection(0, Vertices, Triangles, TArray<FVector>(), UV0, TArray<FColor>(), TArray<FProcMeshTangent>(), true);
 }
 
