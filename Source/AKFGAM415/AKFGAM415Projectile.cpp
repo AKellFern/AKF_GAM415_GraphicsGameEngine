@@ -11,6 +11,10 @@
 //Niagara systems
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraComponent.h"
+//Perlin Terrain Proc
+#include "PerlinProcTerrain.h"
+
+
 
 AAKFGAM415Projectile::AAKFGAM415Projectile()
 {
@@ -104,6 +108,14 @@ void AAKFGAM415Projectile::OnHit(
 
 		MatInstance->SetVectorParameterValue("Color", randColor);
 		MatInstance->SetScalarParameterValue("Frame", frameNum);
+
+		//Verify that the OtherActor is a PerlinProcTerrain actor	
+		APerlinProcTerrain* procTerrain = Cast<APerlinProcTerrain>(OtherActor);
+
+		if (procTerrain)
+		{
+			procTerrain->AlterMesh(Hit.ImpactPoint);
+		}
 		
 	}
 }
