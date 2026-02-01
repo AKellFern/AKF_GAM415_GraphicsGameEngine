@@ -5,6 +5,8 @@
 #include "ProceduralMeshComponent.h"
 #include "KismetProceduralMeshLibrary.h"
 
+//Perlin Math was created to simulate the randomness of nature
+
 
 // Sets default values
 APerlinProcTerrain::APerlinProcTerrain()
