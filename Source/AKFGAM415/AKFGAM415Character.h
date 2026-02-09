@@ -62,6 +62,11 @@ protected:
 	// End of APawn interface
 
 public:
+	//Boolean to check if the player is teleporting
+	UPROPERTY(EditAnywhere)
+	bool isTeleporting;
+
+
 	/** Returns Mesh1P subobject **/
 	USkeletalMeshComponent* GetMesh1P() const { return Mesh1P; }
 	/** Returns FirstPersonCameraComponent subobject **/
