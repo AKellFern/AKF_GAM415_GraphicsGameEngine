@@ -21,6 +21,11 @@
 // ArrowComponent to aid in the Player Spawn from the portal , providing a visual indicator of the spawn orientation.
 #include "Components/ArrowComponent.h"
 
+// Enabling the glow around the portal
+#include "Components/StaticMeshComponent.h"
+#include "Materials/MaterialInstanceDynamic.h"
+#include "Materials/MaterialInterface.h"
+
 #include "Portal.generated.h"
 
 UCLASS()
@@ -67,6 +72,26 @@ public:
 	// Material applied to the portal mesh that samples the renderTarget to display a live portal view.
 	UPROPERTY(EditAnywhere)
 	UMaterialInterface* mat;
+
+	// Glow ring mesh that sits in front of the portal surface (purely visual)
+	UPROPERTY(EditAnywhere)
+	UStaticMeshComponent* glowMesh;
+
+	// Base material for the glow ring (set in editor)
+	UPROPERTY(EditAnywhere)
+	UMaterialInterface* glowMat;
+
+	// Runtime material instance so we can prove MID control in C++
+	UMaterialInstanceDynamic* glowMID;
+
+	// Color for this portal's glow (set per instance in editor)
+	UPROPERTY(EditAnywhere, Category = "Portal|Glow")
+	FLinearColor glowColor = FLinearColor(0.2f, 0.6f, 1.0f, 1.0f);
+
+	// Base intensity for this portal's glow
+	UPROPERTY(EditAnywhere, Category = "Portal|Glow")
+	float glowBaseIntensity = 12.0f;
+
 
 	// Overlap handler: when the player enters the portal trigger, teleport them to the linked portal
 	// and orient them to face forward relative to the destination portal.

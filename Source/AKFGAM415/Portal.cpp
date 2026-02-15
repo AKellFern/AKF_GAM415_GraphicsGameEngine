@@ -28,6 +28,14 @@ APortal::APortal()
 	// Attach the arrow to the root to indicate the forward spawn direction for teleporting players
 	rootArrow->SetupAttachment(RootComponent);
 
+	// Create glow ring mesh (visual only)
+	glowMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("GlowMesh"));
+	glowMesh->SetupAttachment(RootComponent);
+
+	// This is just a floating visual, so no collision needed
+	glowMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	glowMesh->SetGenerateOverlapEvents(false);
+
 	// The portal surface should not physically block anything; it is a visual surface.
 	mesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
 }
@@ -40,6 +48,7 @@ void APortal::BeginPlay()
 	boxComp->OnComponentBeginOverlap.AddDynamic(this, &APortal::OnOverlapBegin);
 
 	// Prevent the portal mesh from appearing inside its own scene capture (avoids recursive “portal within portal” artifacts)
+	// NOTE: If SetHiddenInSceneCapture fails to compile in your UE version, use: mesh->bHiddenInSceneCapture = true;
 	mesh->SetHiddenInSceneCapture(true);
 
 	// Apply the portal material to the portal mesh.
@@ -48,6 +57,22 @@ void APortal::BeginPlay()
 	{
 		mesh->SetMaterial(0, mat);
 	}
+
+	// Create Dynamic Material Instance for the glow ring so we can change it at runtime
+	if (glowMat)
+	{
+		glowMID = UMaterialInstanceDynamic::Create(glowMat, this);
+		glowMesh->SetMaterial(0, glowMID);
+
+		// Example MID parameters (these must match parameter names in your glow material)
+		glowMID->SetVectorParameterValue("GlowColor", FLinearColor(0.2f, 0.6f, 1.0f, 1.0f));
+		glowMID->SetScalarParameterValue("GlowIntensity", 12.0f);
+	}
+
+	// Apply per-portal glow values
+	glowMID->SetVectorParameterValue("GlowColor", glowColor);
+	glowMID->SetScalarParameterValue("GlowIntensity", glowBaseIntensity);
+
 }
 
 void APortal::Tick(float DeltaTime)
@@ -56,6 +81,18 @@ void APortal::Tick(float DeltaTime)
 
 	// Updates the capture camera transform each frame to simulate depth through the portal.
 	// This supports the module requirement to calculate distance + rotation using scene capture + render targets.
+	// Prevents use if no other portal is linked (avoids nullptr crashes).
+	if (otherPortal && sceneCapture)
+	{
+		UpdatePortals();
+	}
+
+	if (glowMID)
+	{
+		float pulse = (FMath::Sin(GetWorld()->TimeSeconds * 2.0f) + 1.0f) * 0.5f; // 0..1
+		glowMID->SetScalarParameterValue("GlowIntensity", glowBaseIntensity + (pulse * 6.0f));
+	}
+
 }
 
 void APortal::OnOverlapBegin(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -108,6 +145,11 @@ void APortal::UpdatePortals()
 	// Updates the scene capture transform so the render target shows a convincing “through the portal” view.
 	// We offset the capture camera by the relative portal-to-portal displacement while matching the player camera rotation.
 	// This is the core technique for simulating depth using SceneCaptureComponent2D + RenderTarget (module focus).
+	// Prevents use if no other portal is linked (avoids nullptr crashes).
+	if (!otherPortal || !sceneCapture)
+	{
+		return;
+	}
 
 	// Relative offset between this portal and the linked portal
 	FVector Location = this->GetActorLocation() - otherPortal->GetActorLocation();

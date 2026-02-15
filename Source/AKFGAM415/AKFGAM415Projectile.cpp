@@ -8,13 +8,11 @@
 #include "Kismet/GameplayStatics.h"
 // Used for random color and frame selection
 #include "Kismet/KismetMathLibrary.h"
-//Niagara systems
+// Niagara systems
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraComponent.h"
-//Perlin Terrain Proc
+// Perlin Terrain Proc
 #include "PerlinProcTerrain.h"
-
-
 
 AAKFGAM415Projectile::AAKFGAM415Projectile()
 {
@@ -41,17 +39,19 @@ void AAKFGAM415Projectile::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// Use Kismet Math Library to generate random color values and store in a variable to be reused later
-	randColor = FLinearColor(UKismetMathLibrary::RandomFloatInRange(0.0f, 1.0f),
+	// Generate random color once so projectile, particle, and decal all match
+	randColor = FLinearColor(
 		UKismetMathLibrary::RandomFloatInRange(0.0f, 1.0f),
 		UKismetMathLibrary::RandomFloatInRange(0.0f, 1.0f),
-		1.0f);
+		UKismetMathLibrary::RandomFloatInRange(0.0f, 1.0f),
+		1.0f
+	);
 
-	// Create Dynamic Material Instance for projectile and set its color parameter
+	// Create Dynamic Material Instance for projectile
 	dmiMat = UMaterialInstanceDynamic::Create(projMat, this);
 	ballMesh->SetMaterial(0, dmiMat);
 
-	// Set the randomized color to the projectile material
+	// Apply random color to projectile material
 	dmiMat->SetVectorParameterValue("ProjColor", randColor);
 }
 
@@ -63,21 +63,20 @@ void AAKFGAM415Projectile::OnHit(
 	const FHitResult& Hit
 )
 {
-	//Only add impulse and destory projectile if we hit a physics simulating object
+	// Only add impulse and destroy projectile if we hit a physics simulating object
 	if ((OtherActor != nullptr) && (OtherActor != this) && (OtherComp != nullptr) && OtherComp->IsSimulatingPhysics())
 	{
 		OtherComp->AddImpulseAtLocation(
 			GetVelocity() * 100.0f,
 			GetActorLocation()
-			);
+		);
 
 		Destroy();
 	}
-	
 
 	if (OtherActor != nullptr)
 	{
-		//Checks that the Material and Niagara system are valid before proceeding	
+		// Spawn Niagara particle and apply matching color
 		if (colorP)
 		{
 			UNiagaraComponent* particleComp = UNiagaraFunctionLibrary::SpawnSystemAttached(
@@ -88,34 +87,46 @@ void AAKFGAM415Projectile::OnHit(
 				FRotator(0.0f),
 				EAttachLocation::KeepRelativeOffset,
 				true
-				);
-			particleComp->SetNiagaraVariableLinearColor(FString("RandColor"), randColor);
+			);
+
+			if (particleComp)
+			{
+				particleComp->SetNiagaraVariableLinearColor(FString("RandColor"), randColor);
+			}
+
 			ballMesh->DestroyComponent();
 			CollisionComp->BodyInstance.SetCollisionProfileName("NoCollision");
 		}
 
-		float frameNum = UKismetMathLibrary::RandomIntegerInRange(0.f, 3.f);
+		float frameNum = UKismetMathLibrary::RandomIntegerInRange(0, 3);
 
-		auto Decal = UGameplayStatics::SpawnDecalAtLocation(
-			GetWorld(),
-			baseMat,
-			FVector(UKismetMathLibrary::RandomFloatInRange(20.f, 40.f)),
-			Hit.Location,
-			Hit.Normal.Rotation(),
-			0.f
-			);
-		auto MatInstance = Decal->CreateDynamicMaterialInstance();
-
-		MatInstance->SetVectorParameterValue("Color", randColor);
-		MatInstance->SetScalarParameterValue("Frame", frameNum);
-
-		//Verify that the OtherActor is a PerlinProcTerrain actor	
+		// If we hit the procedural terrain, alter it
 		APerlinProcTerrain* procTerrain = Cast<APerlinProcTerrain>(OtherActor);
-
 		if (procTerrain)
 		{
 			procTerrain->AlterMesh(Hit.ImpactPoint);
 		}
-		
+
+		// Spawn decal at impact point (simple version)
+		FVector DecalSize = FVector(UKismetMathLibrary::RandomFloatInRange(20.f, 40.f));
+
+		auto Decal = UGameplayStatics::SpawnDecalAtLocation(
+			GetWorld(),
+			baseMat,
+			DecalSize,
+			Hit.ImpactPoint,
+			Hit.ImpactNormal.Rotation(),
+			0.f
+		);
+
+		if (Decal)
+		{
+			auto MatInstance = Decal->CreateDynamicMaterialInstance();
+			if (MatInstance)
+			{
+				MatInstance->SetVectorParameterValue("Color", randColor);
+				MatInstance->SetScalarParameterValue("Frame", frameNum);
+			}
+		}
 	}
 }
