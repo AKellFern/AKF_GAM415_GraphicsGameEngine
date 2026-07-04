@@ -58,4 +58,4 @@ This modular approach allows multiple gameplay styles (e.g., horror, shooter) to
 ---
 
 ## Status
-🚧 **In Progress** — Active development during the GAM415 term.
+🚧 **In Progress** — Active development during the Capstone
